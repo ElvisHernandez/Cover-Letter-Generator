@@ -85,12 +85,7 @@ export const SettingsScreen = () => {
 
   return (
     <>
-      <div>
-        {isLoading ? "Loading..." : ""}
-        {!!user ? <div>Welcome {user.email}!</div> : ""}
-      </div>
-
-      <div className="form-control w-full max-w-xs">
+      <div className="form-control w-full max-w-xs mt-[60px]">
         <label className="label">
           <span className="label-text">What is your OpenAI API Key?</span>
         </label>
@@ -118,7 +113,7 @@ export const SettingsScreen = () => {
         </button>
       </div>
 
-      <div className="form-control w-full max-w-xs">
+      <div className="form-control w-full max-w-xs my-[24px]">
         <label className="label">
           <span className="label-text">Upload your resume</span>
 

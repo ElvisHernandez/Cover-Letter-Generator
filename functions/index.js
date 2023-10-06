@@ -1,15 +1,11 @@
-const functions = require("firebase-functions");
 const { onRequest } = require("firebase-functions/v2/https");
+const {} = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
 const { user } = require("firebase-functions/v1/auth");
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
-const { getStorage } = require("firebase-admin/storage");
 const { object } = require("firebase-functions/v1/storage");
-const pdf = require("pdf-parse");
 const utils = require("./utils");
-
-const crypto = require("crypto");
 
 const OpenAI = require("openai");
 
@@ -69,7 +65,7 @@ exports.saveOpenAiApiKey = onRequest(async (req, res) => {
         model: "gpt-3.5-turbo"
       });
 
-      const encryptedKey = encrypt(openaiApiKey);
+      const encryptedKey = utils.encrypt(openaiApiKey);
 
       const db = getDatabase(app);
 
@@ -102,7 +98,7 @@ exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
     const snapshot = await userRef.once("value");
     const user = snapshot.val();
 
-    const openaiApiKey = decrypt(user.encryptedOpenAiKey);
+    const openaiApiKey = utils.decrypt(user.encryptedOpenAiKey);
     const resumeAnalysis = await utils.analyzeResumeContent(
       fileText,
       openaiApiKey
@@ -110,51 +106,83 @@ exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
     const parsedAnalysis = utils.parseResumeAnalysis(resumeAnalysis);
 
     console.log(parsedAnalysis);
-
-    // const fs = require("fs");
-    // const path = require("path");
-
-    // console.log("The chat completion ", chatCompletion.choices[0].message);
-
-    // fs.writeFileSync(
-    //   path.resolve(__dirname, "gpt-response.json"),
-    //   JSON.stringify(chatCompletion)
-    // );
     await userRef.update({ ...parsedAnalysis, resumeFileName });
   } catch (e) {
     logger.error(e);
   }
 });
 
-// const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 bytes for AES-256
+exports.createCoverLetter = onRequest(
+  {
+    timeoutSeconds: 540
+  },
+  async (req, res) => {
+    const { jobDescription, userUid } = req.body;
 
-function encrypt(text) {
-  const IV_LENGTH = 16; // For AES, this is always 16
-  let iv = crypto.randomBytes(IV_LENGTH);
-  let cipher = crypto.createCipheriv(
-    "aes-256-cbc",
-    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
-    iv
-  );
-  let encrypted = cipher.update(text);
+    console.log("In the createCoverLetter function");
+    console.log(jobDescription);
 
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
+    const response = {
+      statusCode: 200,
+      coverLetter: "",
+      errors: []
+    };
 
-  return iv.toString("hex") + ":" + encrypted.toString("hex");
-}
+    try {
+      const db = getDatabase(app);
 
-function decrypt(text) {
-  let textParts = text.split(":");
-  let iv = Buffer.from(textParts.shift(), "hex");
-  let encryptedText = Buffer.from(textParts.join(":"), "hex");
-  let decipher = crypto.createDecipheriv(
-    "aes-256-cbc",
-    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
-    iv
-  );
-  let decrypted = decipher.update(encryptedText);
+      const snapshot = await db.ref(`users/${userUid}`).once("value");
+      const user = snapshot.val();
 
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
+      const openaiApiKey = utils.decrypt(user.encryptedOpenAiKey);
 
-  return decrypted.toString();
-}
+      const openai = new OpenAI({
+        apiKey: openaiApiKey
+      });
+
+      const styleOpts = ["casual", "formal", "enthusiastic"];
+      const emphasisOpts = ["problem-solving", "collaboration", "leadership"];
+
+      const style = styleOpts[1];
+      const emphasis = emphasisOpts[2];
+
+      const messages = [
+        {
+          role: "system",
+          content: `You are an expert at crafting cover letters for software engineers. You are to understand the key requirements of this job description ${jobDescription}`
+        },
+        {
+          role: "user",
+          content: `Write a ${style} cover letter that emphasizes ${emphasis} with the following structure:
+
+        Introduction - One paragraph, start with "Dear Hiring Manager". Address the companies key needs and introduce me based off the following information: ${user.background}.
+        Body - Two paragraphs max, match my experience to the job requirements based off ${user.experience}.
+        Conclusion - Thank the hiring manager for their time, express enthusiasm, and leave a call to action like expressing interest in an interview.
+        `
+        }
+      ];
+
+      const chatCompletion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages,
+        temperature: 1.1
+      });
+
+      response.coverLetter = chatCompletion.choices[0].message.content;
+
+      const fs = require("fs");
+      const path = require("path");
+
+      fs.writeFileSync(
+        path.resolve(__dirname, "gpt-response.json"),
+        JSON.stringify({ chatCompletion })
+      );
+    } catch (e) {
+      logger.error(e);
+      response.errors(e.message);
+      response.statusCode = 500;
+    }
+
+    res.status(response.statusCode).send(response);
+  }
+);

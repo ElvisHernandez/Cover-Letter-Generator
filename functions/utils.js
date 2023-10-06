@@ -1,6 +1,8 @@
+const functions = require("firebase-functions");
 const { getStorage } = require("firebase-admin/storage");
 const pdf = require("pdf-parse");
 const OpenAI = require("openai");
+const crypto = require("crypto");
 
 const internals = {};
 
@@ -56,6 +58,37 @@ internals.parseResumeAnalysis = (resumeAnalysis) => {
     skills: content.slice(skillsIndexStart, skillsIndexEnd),
     experience: content.slice(experienceIndexStart)
   };
+};
+
+internals.encrypt = (text) => {
+  const IV_LENGTH = 16; // For AES, this is always 16
+  let iv = crypto.randomBytes(IV_LENGTH);
+  let cipher = crypto.createCipheriv(
+    "aes-256-cbc",
+    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
+    iv
+  );
+  let encrypted = cipher.update(text);
+
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+  return iv.toString("hex") + ":" + encrypted.toString("hex");
+};
+
+internals.decrypt = (text) => {
+  let textParts = text.split(":");
+  let iv = Buffer.from(textParts.shift(), "hex");
+  let encryptedText = Buffer.from(textParts.join(":"), "hex");
+  let decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
+    iv
+  );
+  let decrypted = decipher.update(encryptedText);
+
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+  return decrypted.toString();
 };
 
 module.exports = internals;
