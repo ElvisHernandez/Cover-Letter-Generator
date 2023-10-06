@@ -5,8 +5,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithCredential,
-  signInWithPopup,
-  User
+  signInWithPopup
 } from "firebase/auth";
 import { onValue, ref } from "firebase/database";
 import { createProvider } from "puro";
@@ -15,6 +14,12 @@ import { useContext, useEffect, useState } from "react";
 import { app, auth, db } from "~context";
 
 setPersistence(auth, browserLocalPersistence);
+
+type User = {
+  email: string;
+  uid: string;
+  encryptedOpenAiKey?: string;
+};
 
 const useViewProvider = () => {
   const [isLoading, setIsLoading] = useState(false);

@@ -21,7 +21,7 @@ function IndexPopupContent() {
   if (!user) return <SigninScreen />;
 
   return (
-    <div>
+    <div className="flex items-center flex-col">
       {/* {!user && <SigninScreen />} */}
       {page === 0 && <h1>Analyze screen</h1>}
       {page === 1 && <h1>Cover letters screen</h1>}
