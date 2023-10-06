@@ -19,6 +19,7 @@ type User = {
   email: string;
   uid: string;
   encryptedOpenAiKey?: string;
+  resumeFileName?: string;
 };
 
 const useViewProvider = () => {

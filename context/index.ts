@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectDatabaseEmulator, getDatabase } from "firebase/database";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.PLASMO_PUBLIC_FIREBASE_PUBLIC_API_KEY,
@@ -15,9 +16,11 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getDatabase();
+export const db = getDatabase(app);
+export const storage = getStorage(app);
 
 if (process.env.NODE_ENV === "development") {
   connectAuthEmulator(auth, "http://127.0.0.1:9099");
   connectDatabaseEmulator(db, "127.0.0.1", 9000);
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
 }

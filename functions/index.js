@@ -4,14 +4,14 @@ const logger = require("firebase-functions/logger");
 const { user } = require("firebase-functions/v1/auth");
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
+const { getStorage } = require("firebase-admin/storage");
+const { object } = require("firebase-functions/v1/storage");
+const pdf = require("pdf-parse");
+const utils = require("./utils");
 
 const crypto = require("crypto");
 
 const OpenAI = require("openai");
-
-// const openai = new OpenAI({
-//   apiKey: functions.config().OPENAI.API_KEY
-// });
 
 const serviceAccount = require("../private/firebase_service_account.json");
 
@@ -38,14 +38,6 @@ exports.onAuthUserCreate = user().onCreate((user, ctx) => {
 
 exports.saveOpenAiApiKey = onRequest(async (req, res) => {
   const { openaiApiKey, userUid } = req.body;
-
-  //   console.log("In the saveOpenAiApiKey function: ", openaiApiKey);
-
-  //   const encryptedKey = encrypt(openaiApiKey);
-  //   const decryptedKey = decrypt(encryptedKey);
-
-  //   console.log("Encrypted key: ", encryptedKey);
-  //   console.log("Decryption worked: ", openaiApiKey === decryptedKey);
 
   const response = {
     statusCode: 200,
@@ -94,6 +86,44 @@ exports.saveOpenAiApiKey = onRequest(async (req, res) => {
   }
 
   res.status(response.statusCode).send(response);
+});
+
+exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
+  console.log("In the analyzeResumeOnUpload function");
+  console.log(object);
+
+  try {
+    const [_, userUid, resumeFileName] = object.name.split("/");
+    const fileText = await utils.parsedFileText(app, object);
+
+    const db = getDatabase(app);
+
+    const userRef = db.ref(`users/${userUid}`);
+    const snapshot = await userRef.once("value");
+    const user = snapshot.val();
+
+    const openaiApiKey = decrypt(user.encryptedOpenAiKey);
+    const resumeAnalysis = await utils.analyzeResumeContent(
+      fileText,
+      openaiApiKey
+    );
+    const parsedAnalysis = utils.parseResumeAnalysis(resumeAnalysis);
+
+    console.log(parsedAnalysis);
+
+    // const fs = require("fs");
+    // const path = require("path");
+
+    // console.log("The chat completion ", chatCompletion.choices[0].message);
+
+    // fs.writeFileSync(
+    //   path.resolve(__dirname, "gpt-response.json"),
+    //   JSON.stringify(chatCompletion)
+    // );
+    await userRef.update({ ...parsedAnalysis, resumeFileName });
+  } catch (e) {
+    logger.error(e);
+  }
 });
 
 // const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 bytes for AES-256
