@@ -21,6 +21,8 @@ const app = initializeApp({
     "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
 });
 
+const db = getDatabase(app);
+
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
   response.send("Hello from firebase!");
@@ -28,7 +30,6 @@ exports.helloWorld = onRequest((request, response) => {
 
 export const onAuthUserCreate = user().onCreate((user, ctx) => {
   console.log("In the on auth user create thing");
-  const db = getDatabase(app);
 
   return db.ref(`/users/${user.uid}`).set({
     email: user.email,
@@ -77,8 +78,6 @@ export const saveOpenAiApiKey = onRequest(async (req, res) => {
 
       const encryptedKey = encrypt(openaiApiKey);
 
-      const db = getDatabase(app);
-
       db.ref(`/users/${userUid}`).update({
         encryptedOpenAiKey: encryptedKey
       });
@@ -103,8 +102,6 @@ export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
   try {
     const [_, userUid, resumeFileName] = object.name.split("/");
     const fileText = await parseFileText(app, object);
-
-    const db = getDatabase(app);
 
     const userRef = db.ref(`users/${userUid}`);
     const snapshot = await userRef.once("value");
@@ -136,9 +133,9 @@ export const createCoverLetter = onRequest(
       errors: []
     };
 
-    try {
-      const db = getDatabase(app);
+    console.log("In the createCoverLetter function: ", userUid);
 
+    try {
       const snapshot = await db.ref(`users/${userUid}`).once("value");
       const user = snapshot.val();
 
@@ -174,18 +171,17 @@ export const createCoverLetter = onRequest(
         ]
       });
 
-      response.data = {
-        coverLetter: chatCompletion.choices[0].message.content
-      };
-
-      const fs = require("fs");
-      const path = require("path");
-
-      fs.writeFileSync(
-        path.resolve(__dirname, "gpt-response.json"),
-        JSON.stringify({ chatCompletion })
-      );
+      await db.ref(`users/${userUid}`).update({
+        coverLetterLoading: false,
+        currentCoverLetter: chatCompletion.choices[0].message.content,
+        coverLetterError: false
+      });
     } catch (e) {
+      await db.ref(`users/${userUid}`).update({
+        coverLetterLoading: false,
+        currentCoverLetter: "",
+        coverLetterError: true
+      });
       logger.error(e);
       response.errors.push((e as Error).message);
       response.statusCode = 500;

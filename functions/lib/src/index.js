@@ -14,13 +14,13 @@ const app = (0, app_1.initializeApp)({
     credential: (0, app_1.cert)(serviceAccount),
     databaseURL: "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
 });
+const db = (0, database_1.getDatabase)(app);
 exports.helloWorld = (0, https_1.onRequest)((request, response) => {
     logger.info("Hello logs!", { structuredData: true });
     response.send("Hello from firebase!");
 });
 exports.onAuthUserCreate = (0, auth_1.user)().onCreate((user, ctx) => {
     console.log("In the on auth user create thing");
-    const db = (0, database_1.getDatabase)(app);
     return db.ref(`/users/${user.uid}`).set({
         email: user.email,
         uid: user.uid
@@ -54,7 +54,6 @@ exports.saveOpenAiApiKey = (0, https_1.onRequest)(async (req, res) => {
                 model: "gpt-3.5-turbo"
             });
             const encryptedKey = (0, utils_1.encrypt)(openaiApiKey);
-            const db = (0, database_1.getDatabase)(app);
             db.ref(`/users/${userUid}`).update({
                 encryptedOpenAiKey: encryptedKey
             });
@@ -76,7 +75,6 @@ exports.analyzeResumeOnUpload = (0, storage_1.object)().onFinalize(async (object
     try {
         const [_, userUid, resumeFileName] = object.name.split("/");
         const fileText = await (0, utils_1.parseFileText)(app, object);
-        const db = (0, database_1.getDatabase)(app);
         const userRef = db.ref(`users/${userUid}`);
         const snapshot = await userRef.once("value");
         const user = snapshot.val();
@@ -100,8 +98,8 @@ exports.createCoverLetter = (0, https_1.onRequest)({
         statusCode: 200,
         errors: []
     };
+    console.log("In the createCoverLetter function: ", userUid);
     try {
-        const db = (0, database_1.getDatabase)(app);
         const snapshot = await db.ref(`users/${userUid}`).once("value");
         const user = snapshot.val();
         const openaiApiKey = (0, utils_1.decrypt)(user.encryptedOpenAiKey);
@@ -131,14 +129,18 @@ exports.createCoverLetter = (0, https_1.onRequest)({
                 }
             ]
         });
-        response.data = {
-            coverLetter: chatCompletion.choices[0].message.content
-        };
-        const fs = require("fs");
-        const path = require("path");
-        fs.writeFileSync(path.resolve(__dirname, "gpt-response.json"), JSON.stringify({ chatCompletion }));
+        await db.ref(`users/${userUid}`).update({
+            coverLetterLoading: false,
+            currentCoverLetter: chatCompletion.choices[0].message.content,
+            coverLetterError: false
+        });
     }
     catch (e) {
+        await db.ref(`users/${userUid}`).update({
+            coverLetterLoading: false,
+            currentCoverLetter: "",
+            coverLetterError: true
+        });
         logger.error(e);
         response.errors.push(e.message);
         response.statusCode = 500;

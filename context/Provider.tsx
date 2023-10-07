@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 import { onValue, ref } from "firebase/database";
 import { createProvider } from "puro";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { app, auth, db } from "~context";
 
@@ -18,27 +18,37 @@ setPersistence(auth, browserLocalPersistence);
 type User = {
   email: string;
   uid: string;
+  currentCoverLetter?: string;
+  currentJobDescription?: string;
+  coverLetterLoading?: boolean;
+  coverLetterError?: boolean;
   encryptedOpenAiKey?: string;
   resumeFileName?: string;
 };
 
+const emptyUser: User = {
+  email: "",
+  uid: "",
+  coverLetterLoading: false
+};
+
 const useViewProvider = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User>(null);
+  const [user, setUser] = useState<User>(emptyUser);
   const [page, setPage] = useState(0);
 
   const onLogout = async () => {
     setIsLoading(true);
     if (user) {
       await auth.signOut();
-      setUser(null);
+      setUser(emptyUser);
     }
   };
 
   const doProdSignin = async () => {
     chrome.identity.getAuthToken({ interactive: true }, async function (token) {
       if (chrome.runtime.lastError || !token) {
-        console.error(chrome.runtime.lastError.message);
+        console.error(chrome.runtime.lastError?.message);
         setIsLoading(false);
         return;
       }
@@ -70,11 +80,16 @@ const useViewProvider = () => {
             const user = snapshot.val();
             setUser(user);
           },
-          { onlyOnce: true }
+          { onlyOnce: false }
         );
       }
     });
   }, []);
+
+  useEffect(() => {
+    console.log("In the user change useEffect");
+    console.log(user);
+  }, [user]);
 
   return {
     page,
