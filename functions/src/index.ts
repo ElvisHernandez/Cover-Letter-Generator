@@ -1,28 +1,32 @@
-const { onRequest } = require("firebase-functions/v2/https");
-const {} = require("firebase-functions/v2");
-const logger = require("firebase-functions/logger");
-const { user } = require("firebase-functions/v1/auth");
-const { initializeApp, cert } = require("firebase-admin/app");
-const { getDatabase } = require("firebase-admin/database");
-const { object } = require("firebase-functions/v1/storage");
-const utils = require("./utils");
+import { cert, initializeApp, ServiceAccount } from "firebase-admin/app";
+import { getDatabase } from "firebase-admin/database";
+import * as logger from "firebase-functions/logger";
+import { user } from "firebase-functions/v1/auth";
+import { object } from "firebase-functions/v1/storage";
+import { onRequest } from "firebase-functions/v2/https";
+import OpenAI from "openai";
 
-const OpenAI = require("openai");
-
-const serviceAccount = require("../private/firebase_service_account.json");
+import * as serviceAccount from "../private/firebase_service_account.json";
+import {
+  analyzeResumeContent,
+  decrypt,
+  encrypt,
+  parseFileText,
+  parseResumeAnalysis
+} from "./utils";
 
 const app = initializeApp({
-  credential: cert(serviceAccount),
+  credential: cert(serviceAccount as ServiceAccount),
   databaseURL:
     "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
 });
 
 exports.helloWorld = onRequest((request, response) => {
   logger.info("Hello logs!", { structuredData: true });
-  response.send("Hello from hello!");
+  response.send("Hello from firebase!");
 });
 
-exports.onAuthUserCreate = user().onCreate((user, ctx) => {
+export const onAuthUserCreate = user().onCreate((user, ctx) => {
   console.log("In the on auth user create thing");
   const db = getDatabase(app);
 
@@ -32,10 +36,16 @@ exports.onAuthUserCreate = user().onCreate((user, ctx) => {
   });
 });
 
-exports.saveOpenAiApiKey = onRequest(async (req, res) => {
+type Response = {
+  statusCode: number;
+  errors: string[];
+  data?: object;
+};
+
+export const saveOpenAiApiKey = onRequest(async (req, res) => {
   const { openaiApiKey, userUid } = req.body;
 
-  const response = {
+  const response: Response = {
     statusCode: 200,
     errors: []
   };
@@ -65,7 +75,7 @@ exports.saveOpenAiApiKey = onRequest(async (req, res) => {
         model: "gpt-3.5-turbo"
       });
 
-      const encryptedKey = utils.encrypt(openaiApiKey);
+      const encryptedKey = encrypt(openaiApiKey);
 
       const db = getDatabase(app);
 
@@ -77,20 +87,22 @@ exports.saveOpenAiApiKey = onRequest(async (req, res) => {
     } catch (e) {
       logger.error(e);
       response.statusCode = 500;
-      response.errors.push(e.message);
+      response.errors.push((e as Error).message);
     }
   }
 
   res.status(response.statusCode).send(response);
 });
 
-exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
+export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
   console.log("In the analyzeResumeOnUpload function");
   console.log(object);
 
+  if (!object.name) return;
+
   try {
     const [_, userUid, resumeFileName] = object.name.split("/");
-    const fileText = await utils.parsedFileText(app, object);
+    const fileText = await parseFileText(app, object);
 
     const db = getDatabase(app);
 
@@ -98,12 +110,9 @@ exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
     const snapshot = await userRef.once("value");
     const user = snapshot.val();
 
-    const openaiApiKey = utils.decrypt(user.encryptedOpenAiKey);
-    const resumeAnalysis = await utils.analyzeResumeContent(
-      fileText,
-      openaiApiKey
-    );
-    const parsedAnalysis = utils.parseResumeAnalysis(resumeAnalysis);
+    const openaiApiKey = decrypt(user.encryptedOpenAiKey);
+    const resumeAnalysis = await analyzeResumeContent(fileText, openaiApiKey);
+    const parsedAnalysis = parseResumeAnalysis(resumeAnalysis);
 
     console.log(parsedAnalysis);
     await userRef.update({ ...parsedAnalysis, resumeFileName });
@@ -112,7 +121,7 @@ exports.analyzeResumeOnUpload = object().onFinalize(async (object) => {
   }
 });
 
-exports.createCoverLetter = onRequest(
+export const createCoverLetter = onRequest(
   {
     timeoutSeconds: 540
   },
@@ -122,9 +131,8 @@ exports.createCoverLetter = onRequest(
     console.log("In the createCoverLetter function");
     console.log(jobDescription);
 
-    const response = {
+    const response: Response = {
       statusCode: 200,
-      coverLetter: "",
       errors: []
     };
 
@@ -134,7 +142,7 @@ exports.createCoverLetter = onRequest(
       const snapshot = await db.ref(`users/${userUid}`).once("value");
       const user = snapshot.val();
 
-      const openaiApiKey = utils.decrypt(user.encryptedOpenAiKey);
+      const openaiApiKey = decrypt(user.encryptedOpenAiKey);
 
       const openai = new OpenAI({
         apiKey: openaiApiKey
@@ -146,29 +154,29 @@ exports.createCoverLetter = onRequest(
       const style = styleOpts[1];
       const emphasis = emphasisOpts[2];
 
-      const messages = [
-        {
-          role: "system",
-          content: `You are an expert at crafting cover letters for software engineers. You are to understand the key requirements of this job description ${jobDescription}`
-        },
-        {
-          role: "user",
-          content: `Write a ${style} cover letter that emphasizes ${emphasis} with the following structure:
-
-        Introduction - One paragraph, start with "Dear Hiring Manager". Address the companies key needs and introduce me based off the following information: ${user.background}.
-        Body - Two paragraphs max, match my experience to the job requirements based off ${user.experience}.
-        Conclusion - Thank the hiring manager for their time, express enthusiasm, and leave a call to action like expressing interest in an interview.
-        `
-        }
-      ];
-
       const chatCompletion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
-        messages,
-        temperature: 1.1
+        temperature: 1.1,
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at crafting personalized cover letters for software engineers. You are to understand the key requirements of this job description ${jobDescription}`
+          },
+          {
+            role: "user",
+            content: `Write a ${style} cover letter that emphasizes ${emphasis} with the following structure:
+    
+            Introduction - One paragraph, start with "Dear Hiring Manager". Address the companies key needs and introduce me based off the following information: ${user.background}.
+            Body - Two paragraphs max, match my experience to the job requirements based off ${user.experience}.
+            Conclusion - Thank the hiring manager for their time, express enthusiasm, and leave a call to action like expressing interest in an interview.
+            `
+          }
+        ]
       });
 
-      response.coverLetter = chatCompletion.choices[0].message.content;
+      response.data = {
+        coverLetter: chatCompletion.choices[0].message.content
+      };
 
       const fs = require("fs");
       const path = require("path");
@@ -179,7 +187,7 @@ exports.createCoverLetter = onRequest(
       );
     } catch (e) {
       logger.error(e);
-      response.errors(e.message);
+      response.errors.push((e as Error).message);
       response.statusCode = 500;
     }
 

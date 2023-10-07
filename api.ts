@@ -7,7 +7,13 @@ const FUNCTIONS_PATH =
     ? LOCAL_FUNCTIONS_PATH
     : PROD_FUNCTIONS_PATH;
 
-const post = async ({ firebaseFunctionName, payload }) => {
+const post = async <T>({
+  firebaseFunctionName,
+  payload
+}: {
+  firebaseFunctionName: string;
+  payload: object;
+}): Promise<T | undefined> => {
   try {
     const res = await fetch(`${FUNCTIONS_PATH}/${firebaseFunctionName}`, {
       method: "post",

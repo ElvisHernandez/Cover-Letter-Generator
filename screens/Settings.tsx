@@ -1,5 +1,5 @@
 import { deleteObject, listAll, ref, uploadBytes } from "firebase/storage";
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { storage } from "~context";
 import { useView } from "~context/Provider";
@@ -19,7 +19,7 @@ export const SettingsScreen = () => {
   });
 
   const saveOpenAiApiKey = async () => {
-    const res = await api.post({
+    const res = await api.post<{ statusCode: number }>({
       firebaseFunctionName: "saveOpenAiApiKey",
       payload: {
         openaiApiKey,
@@ -27,7 +27,7 @@ export const SettingsScreen = () => {
       }
     });
 
-    if (res.statusCode === 200) {
+    if (res?.statusCode === 200) {
       setSavedOpenaiKeyRes({
         msg: "API key saved successfully!",
         success: true
@@ -44,11 +44,16 @@ export const SettingsScreen = () => {
     console.log(res);
   };
 
-  const uploadResume = async (e) => {
+  const uploadResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       console.log("In the file onChange");
       console.log(e);
-      const [file] = e.target.files;
+      const file = e.target.files?.[0];
+
+      if (!file) {
+        console.error("No file uploaded");
+        return;
+      }
 
       const resumeRef = ref(storage, `resumes/${user.uid}/${file.name}`);
       await deleteResumes();

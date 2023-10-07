@@ -13,7 +13,7 @@ export const AnalyzeScreen = () => {
     setIsLoading(true);
 
     try {
-      const res = await api.post({
+      const res = await api.post<{ data: { coverLetter: string } }>({
         firebaseFunctionName: "createCoverLetter",
         payload: {
           jobDescription,
@@ -21,7 +21,7 @@ export const AnalyzeScreen = () => {
         }
       });
 
-      setCoverLetter(res.coverLetter);
+      setCoverLetter(res?.data?.coverLetter ?? "");
     } catch (e) {
       console.error(e);
     } finally {
