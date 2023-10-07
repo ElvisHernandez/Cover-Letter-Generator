@@ -19,6 +19,8 @@ export const SettingsScreen = () => {
   });
 
   const saveOpenAiApiKey = async () => {
+    console.log("In the saveOpenAiApiKey");
+    console.log(openaiApiKey, user.uid);
     const res = await api.post<{ statusCode: number }>({
       firebaseFunctionName: "saveOpenAiApiKey",
       payload: {

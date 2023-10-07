@@ -28,6 +28,8 @@ exports.onAuthUserCreate = (0, auth_1.user)().onCreate((user, ctx) => {
 });
 exports.saveOpenAiApiKey = (0, https_1.onRequest)(async (req, res) => {
     const { openaiApiKey, userUid } = req.body;
+    console.log("In the saveOpenAiApiKey function");
+    console.log(req.body);
     const response = {
         statusCode: 200,
         errors: []

@@ -46,6 +46,9 @@ type Response = {
 export const saveOpenAiApiKey = onRequest(async (req, res) => {
   const { openaiApiKey, userUid } = req.body;
 
+  console.log("In the saveOpenAiApiKey function");
+  console.log(req.body);
+
   const response: Response = {
     statusCode: 200,
     errors: []

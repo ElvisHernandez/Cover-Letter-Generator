@@ -52,13 +52,12 @@ export const AnalyzeScreen = () => {
     const newCoverLetterKey = push(ref(db, "coverLetters")).key;
     try {
       const updates = {
-        [`users/${user.uid}`]: {
-          currentCoverLetter: "",
-          currentJobDescription: ""
-        },
+        [`users/${user.uid}/currentCoverLetter`]: "",
+        [`users/${user.uid}/currentJobDescription`]: "",
         [`coverLetters/${newCoverLetterKey}`]: {
           userUid: user.uid,
-          content: user.currentCoverLetter
+          content: user.currentCoverLetter,
+          timestamp: Date.now()
         }
       };
 
@@ -121,7 +120,7 @@ export const AnalyzeScreen = () => {
       {user.coverLetterLoading && (
         <>
           <span className="loading loading-spinner loading-lg mt-[12px]"></span>
-          <button className="btn btn-error" onClick={cancelAnalysis}>
+          <button className="btn btn-error mt-[12px]" onClick={cancelAnalysis}>
             Cancel
           </button>
         </>

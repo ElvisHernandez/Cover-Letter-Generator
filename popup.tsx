@@ -8,6 +8,7 @@ import { SigninScreen } from "~screens/Signin";
 import "./style.css";
 
 import { AnalyzeScreen } from "~screens/Analyze";
+import { CoverLettersScreen } from "~screens/CoverLetters";
 
 export default function IndexPopup() {
   return (
@@ -29,7 +30,7 @@ function IndexPopupContent() {
         {!!user ? <div className="mb-[24px]">Welcome {user.email}!</div> : ""}
       </div>{" "}
       {page === 0 && <AnalyzeScreen />}
-      {page === 1 && <h1>Cover letters screen</h1>}
+      {page === 1 && <CoverLettersScreen />}
       {page === 2 && <SettingsScreen />}
       <footer className="flex justify-evenly fixed bottom-[12px] left-0 w-full">
         <button
