@@ -21,7 +21,7 @@ export default function IndexPopup() {
 function IndexPopupContent() {
   const { user, page, setPage, isLoading } = useView();
 
-  if (!user) return <SigninScreen />;
+  if (!user.uid) return <SigninScreen />;
 
   return (
     <div className="flex items-center flex-col overflow-y-auto mb-[64px]">

@@ -151,8 +151,8 @@ export const createCoverLetter = onRequest(
       const styleOpts = ["casual", "formal", "enthusiastic"];
       const emphasisOpts = ["problem-solving", "collaboration", "leadership"];
 
-      const style = styleOpts[1];
-      const emphasis = emphasisOpts[2];
+      const style = styleOpts[2];
+      const emphasis = emphasisOpts[1];
 
       const chatCompletion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -165,10 +165,21 @@ export const createCoverLetter = onRequest(
           {
             role: "user",
             content: `Write a ${style} cover letter that emphasizes ${emphasis} with the following structure:
+
+            Greeting: Start with Dear [Company name] team,
     
-            Introduction - One paragraph, start with "Dear Hiring Manager". Address the companies key needs and introduce me based off the following information: ${user.background}.
-            Body - Two paragraphs max, match my experience to the job requirements based off ${user.experience}.
+            Introduction:
+                - Begin with a captivating opener that grabs the reader's attention.
+                - Mention the specific role you're applying for.
+                - Briefly touch upon how your background and skills make you a suitable candidate.
+
+            Body: 
+                - Show that you've researched the company by discussing aspects of their products, culture, or mission that resonate with you.
+                - Highlight how your skills and values align with the company's needs and culture based off this experience ${user.experience}.
+
             Conclusion - Thank the hiring manager for their time, express enthusiasm, and leave a call to action like expressing interest in an interview.
+
+            Limit the cover letter to a max of 300 words.
             `
           }
         ]

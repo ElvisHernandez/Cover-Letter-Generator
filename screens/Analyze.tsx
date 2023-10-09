@@ -1,5 +1,5 @@
 import { push, ref, update } from "firebase/database";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import api from "~api";
 import { db } from "~context";
@@ -7,14 +7,16 @@ import { useView } from "~context/Provider";
 
 export const AnalyzeScreen = () => {
   const { user } = useView();
-  const [jobDescription, setJobDescription] = useState("");
-  //   const [coverLetter, setCoverLetter] = useState("");
-  //   const [isLoading, setIsLoading] = useState(false);
+  const [localJobDescription, setLocalJobDescription] = useState("");
+
+  const jobDescription = useMemo(() => {
+    return localJobDescription || user?.currentJobDescription;
+  }, [user, localJobDescription]);
 
   const createCoverLetter = async () => {
     // setIsLoading(true);
 
-    update(ref(db, `users/${user.uid}`), {
+    await update(ref(db, `users/${user.uid}`), {
       coverLetterLoading: true,
       currentJobDescription: jobDescription
     });
@@ -74,8 +76,8 @@ export const AnalyzeScreen = () => {
           <span className="label-text">Job Description</span>
         </label>
         <textarea
-          defaultValue={user.currentJobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
+          value={jobDescription}
+          onChange={(e) => setLocalJobDescription(e.target.value)}
           className="textarea textarea-bordered h-[300px] w-full"
           placeholder="Enter job description to analyze"></textarea>
       </div>

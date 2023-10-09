@@ -11,45 +11,62 @@ type CoverLetter = {
   timestamp: number;
 };
 
+const letters = (() => {
+  const res = [];
+
+  for (let i = 0; i < 100; i++) {
+    res.push({
+      content: "FFSsdfssdgsgsdgsdgdsdsgsdvxvxcvxcvxcvxcvxcxcbxcbxcbgsdg"
+    });
+  }
+
+  return res;
+})();
+
 export const CoverLettersScreen = () => {
   const { user } = useView();
-  const [coverLetters, setCoverLetters] = useState<Array<CoverLetter>>([]);
-  const [currentlySelectedCoverLetter, setCurrentlySelectedCoverLetter] =
-    useState<CoverLetter>();
+  const [paginatedCoverLetters, setPaginatedCoverLetters] = useState<
+    Array<CoverLetter[]>
+  >([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const getCoverLetters = async () => {
-    console.log("In the getCoverLetters function");
     try {
       const coverLettersRef = query(
-        ref(db, "coverLetters"),
-        orderByChild("userUid"),
-        equalTo(user.uid)
+        ref(db, "coverLetters")
+        // orderByChild("userUid"),
+        // equalTo(user.uid)
       );
 
-      console.log("b");
-
       onValue(coverLettersRef, (snapshot) => {
-        console.log("c");
         const coverLetters = snapshot.val();
-        console.log("d");
-        console.log(user);
+        console.log("In the cover letters");
         console.log(coverLetters);
         if (coverLetters) {
-          console.log("e");
-          setCoverLetters(Object.values(coverLetters));
-          console.log("f");
+          const paginatedCoverLetters = Object.values(coverLetters).reduce<
+            Array<CoverLetter[]>
+          >(
+            (acc, coverLetter) => {
+              const page = acc[acc.length - 1];
+
+              if (page.length === 5) {
+                acc.push([coverLetter as CoverLetter]);
+              } else {
+                page.push(coverLetter as CoverLetter);
+              }
+
+              return acc;
+            },
+            [[]]
+          );
+          console.log("Paginated cover letters: ", paginatedCoverLetters);
+          setPaginatedCoverLetters(paginatedCoverLetters);
         }
       });
     } catch (e) {
-      console.log("g");
       console.error(e);
     }
   };
-
-  useEffect(() => {
-    console.log("In the thing!");
-    getCoverLetters();
-  }, []);
 
   const exportPdf = async (converLetterContent: string) => {
     const pdf = new jsPDF({});
@@ -73,31 +90,45 @@ export const CoverLettersScreen = () => {
     pdf.save("cover-letter.pdf");
   };
 
+  useEffect(() => {
+    getCoverLetters();
+  }, []);
+
+  const goToPreviousPage = () => {
+    if (currentPage === 0) return;
+    setCurrentPage((prev) => prev - 1);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage === paginatedCoverLetters.length - 1) return;
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  if (!paginatedCoverLetters.length) {
+    return (
+      <div>
+        <p>You have no saved cover letters yet</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-screen">
-      {coverLetters.map((coverLetter) => (
+      {paginatedCoverLetters[currentPage].map((coverLetter) => (
         <div className="collapse collapse-arrow bg-base-200 w-full">
           <input type="radio" name="my-accordion-2" />
           <div className="collapse-title text-xl font-medium flex justify-between">
-            {coverLetter.content.slice(0, 50)}...
-            <details className="dropdown z-10">
-              <summary
-                className={`m-1 btn btn-success z-10 relative ${
-                  !!currentlySelectedCoverLetter ? "" : "opacity-70"
-                }`}>
-                Export
-              </summary>
-              <ul
-                style={{ position: "fixed" }}
-                className="p-2 shadow menu dropdown-content z-[10] bg-base-100 rounded-box w-52">
-                <li onClick={() => exportPdf(coverLetter.content)}>
-                  <a>PDF</a>
-                </li>
-                <li>
-                  <a>DOCX</a>
-                </li>
-              </ul>
-            </details>
+            {coverLetter.content.slice(0, 20)}...
+            <div className="z-20">
+              <button
+                className="btn btn-info normal-case z-20 mr-2"
+                onClick={() => exportPdf(coverLetter.content)}>
+                Export PDF
+              </button>
+              <button className="btn btn-info normal-case z-20">
+                Export DOCX
+              </button>
+            </div>
           </div>
           <div className="collapse-content">
             <textarea
@@ -108,6 +139,23 @@ export const CoverLettersScreen = () => {
           </div>
         </div>
       ))}
+      <div className="flex justify-end w-full">
+        <div className="join">
+          <button
+            disabled={currentPage === 0}
+            className={`join-item btn`}
+            onClick={goToPreviousPage}>
+            «
+          </button>
+          <button className="join-item btn">Page {currentPage + 1}</button>
+          <button
+            disabled={currentPage === paginatedCoverLetters.length - 1}
+            className={`join-item btn`}
+            onClick={goToNextPage}>
+            »
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

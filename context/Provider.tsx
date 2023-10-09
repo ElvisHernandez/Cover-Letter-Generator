@@ -26,16 +26,21 @@ type User = {
   resumeFileName?: string;
 };
 
+const emptyUser: User = {
+  email: "",
+  uid: ""
+};
+
 const useViewProvider = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | undefined>();
+  const [user, setUser] = useState<User>(emptyUser);
   const [page, setPage] = useState(0);
 
   const onLogout = async () => {
     setIsLoading(true);
     if (user) {
       await auth.signOut();
-      setUser(undefined);
+      setUser(emptyUser);
     }
   };
 
