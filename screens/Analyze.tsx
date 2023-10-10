@@ -1,5 +1,5 @@
 import { push, ref, update } from "firebase/database";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import api from "~api";
 import { db } from "~context";
@@ -8,14 +8,12 @@ import { useView } from "~context/Provider";
 export const AnalyzeScreen = () => {
   const { user } = useView();
   const [localJobDescription, setLocalJobDescription] = useState("");
-
+  const coverLetterRef = useRef<HTMLTextAreaElement>();
   const jobDescription = useMemo(() => {
     return localJobDescription || user?.currentJobDescription;
   }, [user, localJobDescription]);
 
   const createCoverLetter = async () => {
-    // setIsLoading(true);
-
     await update(ref(db, `users/${user.uid}`), {
       coverLetterLoading: true,
       currentJobDescription: jobDescription
@@ -29,8 +27,6 @@ export const AnalyzeScreen = () => {
           userUid: user.uid
         }
       });
-
-      //   setCoverLetter(res?.data?.coverLetter ?? "");
     } catch (e) {
       console.error(e);
     } finally {
@@ -58,7 +54,7 @@ export const AnalyzeScreen = () => {
         [`users/${user.uid}/currentJobDescription`]: "",
         [`coverLetters/${newCoverLetterKey}`]: {
           userUid: user.uid,
-          content: user.currentCoverLetter,
+          content: coverLetterRef.current?.value ?? user.currentCoverLetter,
           timestamp: Date.now()
         }
       };
@@ -88,6 +84,9 @@ export const AnalyzeScreen = () => {
             <span className="label-text">Cover Letter</span>
           </label>
           <textarea
+            ref={(node: HTMLTextAreaElement) => {
+              coverLetterRef.current = node;
+            }}
             className="textarea textarea-bordered h-[300px] w-full whitespace-pre-line p-[24px]"
             placeholder="Cover Letter">
             {user.currentCoverLetter}

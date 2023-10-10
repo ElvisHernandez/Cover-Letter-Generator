@@ -152,7 +152,7 @@ export const createCoverLetter = onRequest(
       const emphasisOpts = ["problem-solving", "collaboration", "leadership"];
 
       const style = styleOpts[2];
-      const emphasis = emphasisOpts[1];
+      const emphasis = emphasisOpts[0];
 
       const chatCompletion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
