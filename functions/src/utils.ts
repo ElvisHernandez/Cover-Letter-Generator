@@ -1,10 +1,19 @@
 import * as crypto from "crypto";
 import { App } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
-import * as functions from "firebase-functions";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import OpenAI from "openai";
 import * as pdf from "pdf-parse";
+
+const getEncryptionKey = () => {
+  const encryptionKey = process.env.ENCRYPTION_KEY;
+
+  if (!encryptionKey) {
+    throw new Error("No encryption key was found");
+  }
+
+  return encryptionKey;
+};
 
 export const parseFileText = async (
   app: App,
@@ -72,7 +81,7 @@ export const encrypt = (text: string) => {
   let iv = crypto.randomBytes(IV_LENGTH);
   let cipher = crypto.createCipheriv(
     "aes-256-cbc",
-    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
+    Buffer.from(getEncryptionKey(), "hex"),
     iv
   );
   let encrypted = cipher.update(text);
@@ -91,7 +100,7 @@ export const decrypt = (text: string) => {
   let encryptedText = Buffer.from(textParts.join(":"), "hex");
   let decipher = crypto.createDecipheriv(
     "aes-256-cbc",
-    Buffer.from(functions.config().SECRETS.ENCRYPTION_KEY, "hex"),
+    Buffer.from(getEncryptionKey(), "hex"),
     iv
   );
   let decrypted = decipher.update(encryptedText);
