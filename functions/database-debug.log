@@ -7,3 +7,13 @@ WARNING: All illegal access operations will be denied in a future release
 05:15:37.705 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
 05:15:38.181 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO com.firebase.core.namespace.NamespaceActor - cover-letter-generator-8a059-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 103ms, init: 0ms
 05:15:46.351 [NamespaceSystem-blocking-namespace-operation-dispatcher-9] INFO com.firebase.core.namespace.StateManager - Namespace cover-letter-generator-8a059-default-rtdb status Active to Active
+05:35:38.463 [FirebaseWorkerPool-1-2] WARN com.firebase.core.persistence.backend.dummy.EmulatorMetadataPersistence - Multiple projectIds are not recommended in single project mode. Requested 
+namespace cover-letter-generator-8a059, but the emulator is configured for cover-letter-generator-8a059-default-rtdb. To 
+opt-out of single project mode add/set the singleProjectMode: false property in 
+the firebase.json emulators config. 
+05:35:38.469 [NamespaceSystem-akka.actor.default-dispatcher-29] INFO com.firebase.core.namespace.NamespaceActor - cover-letter-generator-8a059 successfully activated FBKV (SurveyIdle(0)) wait: 3ms, init: 0ms
+05:35:38.569 [Thread-0] INFO com.firebase.server.forge.App$ - Attempting graceful shutdown.
+05:35:38.573 [NamespaceSystem-akka.actor.default-dispatcher-29] INFO com.firebase.core.namespace.Terminator$Terminator - 2 actors left to terminate: cover-letter-generator-8a059, cover-letter-generator-8a059-default-rtdb
+05:35:38.577 [NamespaceSystem-akka.actor.default-dispatcher-30] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for cover-letter-generator-8a059-default-rtdb
+05:35:38.577 [NamespaceSystem-akka.actor.default-dispatcher-36] INFO com.firebase.core.namespace.NamespaceActor - stopped namespace actor for cover-letter-generator-8a059
+05:35:38.581 [Thread-0] INFO com.firebase.server.forge.App$ - Graceful shutdown complete.

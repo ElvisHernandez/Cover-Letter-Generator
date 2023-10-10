@@ -1,14 +1,14 @@
 import { NextFunction as Next, Request as Req, Response as Res } from "express";
-import { cert, initializeApp, ServiceAccount } from "firebase-admin/app";
+import { App, cert, initializeApp, ServiceAccount } from "firebase-admin/app";
 import { DecodedIdToken, getAuth } from "firebase-admin/auth";
 import { getDatabase } from "firebase-admin/database";
+import * as functions from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import { user } from "firebase-functions/v1/auth";
 import { object } from "firebase-functions/v1/storage";
 import { onRequest } from "firebase-functions/v2/https";
 import OpenAI from "openai";
 
-import * as serviceAccount from "../private/firebase_service_account.json";
 import {
   analyzeResumeContent,
   decrypt,
@@ -17,15 +17,25 @@ import {
   parseResumeAnalysis
 } from "./utils";
 
-if (process.env.NODE_ENV !== "production") {
+let app: App;
+
+if (functions.config().env.NODE_ENV !== "production") {
+  const serviceAccount = require("../private/firebase_service_account.json");
   process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+  app = initializeApp({
+    credential: cert(serviceAccount as ServiceAccount),
+    databaseURL:
+      "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
+  });
+} else {
+  app = initializeApp({
+    databaseURL:
+      "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
+  });
 }
 
-const app = initializeApp({
-  credential: cert(serviceAccount as ServiceAccount),
-  databaseURL:
-    "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
-});
+if (process.env.NODE_ENV !== "production") {
+}
 
 const db = getDatabase(app);
 const auth = getAuth(app);
