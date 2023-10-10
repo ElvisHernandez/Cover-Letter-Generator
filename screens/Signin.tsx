@@ -7,30 +7,31 @@ import {
 import { auth } from "~context/index";
 import { useView } from "~context/Provider";
 
+const getAuthEmail = () => {
+  const authEmail = process.env.PLASMO_PUBLIC_LOCAL_AUTH_EMAIL;
+  if (!authEmail) {
+    throw new Error("Auth email must be defined");
+  }
+
+  return authEmail;
+};
+
 export const SigninScreen = () => {
   const { onLogin } = useView();
 
   const onSignup = async () => {
     try {
-      await createUserWithEmailAndPassword(
-        auth,
-        process.env.PLASMO_PUBLIC_LOCAL_AUTH_EMAIL,
-        "password"
-      );
+      await createUserWithEmailAndPassword(auth, getAuthEmail(), "password");
     } catch (e) {
-      console.log("Error on signup: ", e);
+      console.error("Error on signup: ", e);
     }
   };
 
   const onSignin = async () => {
     try {
-      await signInWithEmailAndPassword(
-        auth,
-        process.env.PLASMO_PUBLIC_LOCAL_AUTH_EMAIL,
-        "password"
-      );
+      await signInWithEmailAndPassword(auth, getAuthEmail(), "password");
     } catch (e) {
-      console.log("Error signing in: ", e);
+      console.error("Error signing in: ", e);
     }
   };
 

@@ -43,8 +43,6 @@ export const CoverLettersScreen = () => {
 
       onValue(coverLettersRef, (snapshot) => {
         const coverLetters = snapshot.val();
-        console.log("In the cover letters");
-        console.log(coverLetters);
         if (coverLetters) {
           const paginatedCoverLetters = Object.entries(coverLetters)
             .map(([key, coverLetter]) => ({
@@ -65,7 +63,6 @@ export const CoverLettersScreen = () => {
               },
               [[]]
             );
-          console.log("Paginated cover letters: ", paginatedCoverLetters);
           setPaginatedCoverLetters(paginatedCoverLetters);
         }
       });

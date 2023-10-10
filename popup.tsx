@@ -24,7 +24,8 @@ function IndexPopupContent() {
   if (!user.uid) return <SigninScreen />;
 
   return (
-    <div className="flex items-center flex-col overflow-y-auto mb-[64px]">
+    <div
+      className={`flex items-center flex-col ${page === 0 ? "pb-[86px]" : ""}`}>
       <div>
         {isLoading ? "Loading..." : ""}
         {!!user ? <div className="mb-[24px]">Welcome {user.email}!</div> : ""}

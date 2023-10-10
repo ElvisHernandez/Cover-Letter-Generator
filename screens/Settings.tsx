@@ -1,7 +1,8 @@
+import { ref as dbRef, update } from "firebase/database";
 import { deleteObject, listAll, ref, uploadBytes } from "firebase/storage";
 import React, { useState } from "react";
 
-import { storage } from "~context";
+import { db, storage } from "~context";
 import { useView } from "~context/Provider";
 
 import api from "../api";
@@ -9,6 +10,7 @@ import api from "../api";
 export const SettingsScreen = () => {
   const { user, isLoading, onLogout } = useView();
   const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [openAiKeyLoading, setOpenAiKeyLoading] = useState(false);
   const [savedOpenaiKeyRes, setSavedOpenaiKeyRes] = useState({
     msg: "",
     success: false
@@ -19,37 +21,44 @@ export const SettingsScreen = () => {
   });
 
   const saveOpenAiApiKey = async () => {
-    console.log("In the saveOpenAiApiKey");
-    console.log(openaiApiKey, user.uid);
-    const res = await api.post<{ statusCode: number }>({
-      firebaseFunctionName: "saveOpenAiApiKey",
-      payload: {
-        openaiApiKey,
-        userUid: user.uid
+    try {
+      setOpenAiKeyLoading(true);
+      const res = await api.post<{ statusCode: number }>({
+        firebaseFunctionName: "saveOpenAiApiKey",
+        payload: {
+          openaiApiKey,
+          userUid: user.uid
+        }
+      });
+
+      if (res?.statusCode === 200) {
+        setSavedOpenaiKeyRes({
+          msg: "API key saved successfully!",
+          success: true
+        });
+      } else {
+        setSavedOpenaiKeyRes({
+          msg: "API key failed to save, please make sure your key is correct and try again",
+          success: false
+        });
       }
-    });
 
-    if (res?.statusCode === 200) {
-      setSavedOpenaiKeyRes({
-        msg: "API key saved successfully!",
-        success: true
-      });
-    } else {
-      setSavedOpenaiKeyRes({
-        msg: "API key failed to save, please make sure your key is correct and try again",
-        success: false
-      });
+      setTimeout(
+        () => setSavedOpenaiKeyRes({ msg: "", success: false }),
+        10000
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setOpenAiKeyLoading(false);
     }
-
-    setTimeout(() => setSavedOpenaiKeyRes({ msg: "", success: false }), 10000);
-    console.log("In the saveOpenaiApiKey function");
-    console.log(res);
   };
 
   const uploadResume = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      console.log("In the file onChange");
-      console.log(e);
+      await update(dbRef(db, `users/${user.uid}`), {
+        resumeLoading: true
+      });
       const file = e.target.files?.[0];
 
       if (!file) {
@@ -59,10 +68,8 @@ export const SettingsScreen = () => {
 
       const resumeRef = ref(storage, `resumes/${user.uid}/${file.name}`);
       await deleteResumes();
-      const res = await uploadBytes(resumeRef, file);
+      await uploadBytes(resumeRef, file);
 
-      console.log("Uploaded resume!!!");
-      console.log(res);
       setUploadedResumeRes({
         msg: "Resume uploadeded successfully",
         success: true
@@ -103,7 +110,6 @@ export const SettingsScreen = () => {
           onChange={(e) => setOpenaiApiKey(e.target.value)}
           className="input input-bordered w-full max-w-xs"
         />
-
         {!!savedOpenaiKeyRes.msg && (
           <p
             className={`py-2 ${
@@ -112,19 +118,28 @@ export const SettingsScreen = () => {
             {savedOpenaiKeyRes.msg}
           </p>
         )}
-        <button
-          disabled={!openaiApiKey}
-          className="btn btn-primary"
-          onClick={saveOpenAiApiKey}>
-          Submit
-        </button>
+        {!openAiKeyLoading && (
+          <button
+            disabled={!openaiApiKey}
+            className="btn btn-primary"
+            onClick={saveOpenAiApiKey}>
+            Submit
+          </button>
+        )}{" "}
+        {openAiKeyLoading && (
+          <div className="flex justify-center mt-2">
+            <span className="loading loading-spinner loading-md"></span>
+          </div>
+        )}
       </div>
 
       <div className="form-control w-full max-w-xs my-[24px]">
         <label className="label">
           <span className="label-text">Upload your resume</span>
-
-          {!!user.resumeFileName && (
+          {!!user.resumeLoading && (
+            <span className="loading loading-spinner loading-xs"></span>
+          )}
+          {!!user.resumeFileName && !user.resumeLoading && (
             <span className="text-green-500">({user.resumeFileName})</span>
           )}
         </label>

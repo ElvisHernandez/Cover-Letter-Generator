@@ -8,23 +8,26 @@ import { useView } from "~context/Provider";
 export const AnalyzeScreen = () => {
   const { user } = useView();
   const [localJobDescription, setLocalJobDescription] = useState("");
+  const [style, setStyle] = useState("casual");
+  const [emphasis, setEmphasis] = useState("problemSolving");
   const coverLetterRef = useRef<HTMLTextAreaElement>();
   const jobDescription = useMemo(() => {
     return localJobDescription || user?.currentJobDescription;
   }, [user, localJobDescription]);
 
   const createCoverLetter = async () => {
-    await update(ref(db, `users/${user.uid}`), {
-      coverLetterLoading: true,
-      currentJobDescription: jobDescription
-    });
-
     try {
+      await update(ref(db, `users/${user.uid}`), {
+        coverLetterLoading: true,
+        currentJobDescription: jobDescription
+      });
       await api.post({
         firebaseFunctionName: "createCoverLetter",
         payload: {
           jobDescription,
-          userUid: user.uid
+          userUid: user.uid,
+          style,
+          emphasis
         }
       });
     } catch (e) {
@@ -67,6 +70,40 @@ export const AnalyzeScreen = () => {
 
   return (
     <>
+      <div className="w-full flex justify-center">
+        <div className="form-control w-full max-w-xs">
+          <label className="label">
+            <span className="label-text">Style</span>
+          </label>
+          <select
+            className="select select-bordered"
+            onChange={(e) => setStyle(e.target.value)}
+            value={style}>
+            <option disabled selected>
+              Pick one
+            </option>
+            <option value="casual">Casual</option>
+            <option value="formal">formal</option>
+            <option value="enthusiastic">Enthusiastic</option>
+          </select>
+        </div>
+        <div className="form-control w-full max-w-xs">
+          <label className="label">
+            <span className="label-text">Emphasis</span>
+          </label>
+          <select
+            className="select select-bordered"
+            onChange={(e) => setEmphasis(e.target.value)}
+            value={emphasis}>
+            <option disabled selected>
+              Pick one
+            </option>
+            <option value="problemSolving">Problem-Solving</option>
+            <option value="collaboration">Collaboration</option>
+            <option value="leadership">Leadership</option>
+          </select>
+        </div>
+      </div>
       <div className="form-control w-full">
         <label className="label">
           <span className="label-text">Job Description</span>

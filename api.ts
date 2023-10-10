@@ -1,3 +1,5 @@
+import { auth } from "~context";
+
 const PROD_FUNCTIONS_PATH = "";
 const LOCAL_FUNCTIONS_PATH =
   "http://127.0.0.1:5001/cover-letter-generator-8a059/us-central1";
@@ -15,10 +17,13 @@ const post = async <T>({
   payload: object;
 }): Promise<T | undefined> => {
   try {
+    const idToken = await auth.currentUser?.getIdToken();
+
     const res = await fetch(`${FUNCTIONS_PATH}/${firebaseFunctionName}`, {
       method: "post",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + idToken
       },
       body: JSON.stringify(payload)
     });

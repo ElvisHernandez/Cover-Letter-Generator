@@ -18,6 +18,7 @@ setPersistence(auth, browserLocalPersistence);
 type User = {
   email: string;
   uid: string;
+  resumeLoading?: boolean;
   currentCoverLetter?: string;
   currentJobDescription?: string;
   coverLetterLoading?: boolean;
@@ -84,11 +85,6 @@ const useViewProvider = () => {
       }
     });
   }, []);
-
-  useEffect(() => {
-    console.log("In the user change useEffect");
-    console.log(user);
-  }, [user]);
 
   return {
     page,
