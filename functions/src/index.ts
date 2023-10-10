@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import { NextFunction as Next, Request as Req, Response as Res } from "express";
 import { App, cert, initializeApp, ServiceAccount } from "firebase-admin/app";
 import { DecodedIdToken, getAuth } from "firebase-admin/auth";
@@ -117,12 +119,17 @@ export const saveOpenAiApiKey = onRequest((req, res) => {
         const encryptedKey = encrypt(openaiApiKey);
 
         db.ref(`/users/${userUid}`).update({
-          encryptedOpenAiKey: encryptedKey
+          encryptedOpenAiKey: encryptedKey,
+          encryptedOpenAiKeyError: false
         });
       } catch (e) {
+        db.ref(`/users/${userUid}`).update({
+          encryptedOpenAiKeyError: true
+        });
         logger.error(e);
         response.statusCode = 500;
         response.errors.push((e as Error).message);
+      } finally {
       }
     }
 
@@ -134,6 +141,8 @@ export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
   if (!object.name) return;
   const [_, userUid, resumeFileName] = object.name.split("/");
   const userRef = db.ref(`users/${userUid}`);
+
+  let resumeError = false;
 
   try {
     const fileText = await parseFileText(app, object);
@@ -147,9 +156,11 @@ export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
 
     await userRef.update({ ...parsedAnalysis, resumeFileName });
   } catch (e) {
+    resumeError = true;
     logger.error(e);
   } finally {
     await userRef.update({
+      resumeError,
       resumeLoading: false
     });
   }
@@ -201,6 +212,13 @@ export const createCoverLetter = onRequest(
 
         const chosenStyle = styleOpts[style];
         const chosenEmphasis = emphasisOpts[emphasis];
+
+        console.log("--------------------------------------------------------");
+        console.log(`style: ${style} | chosen style: ${chosenStyle}`);
+        console.log(
+          `emphasis: ${emphasis} | chosen emphasis: ${chosenEmphasis}`
+        );
+        console.log("--------------------------------------------------------");
 
         const chatCompletion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",

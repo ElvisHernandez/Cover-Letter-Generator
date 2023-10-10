@@ -1,6 +1,15 @@
 import { auth } from "~context";
 
-const PROD_FUNCTIONS_PATH = "";
+const getProdFunctionsHost = () => {
+  const functionsHost = process.env.PLASMO_PUBLIC_FUNCTIONS_HOST;
+  if (!functionsHost) {
+    throw new Error("Production functions host not found");
+  }
+
+  return functionsHost;
+};
+
+const PROD_FUNCTIONS_PATH = getProdFunctionsHost();
 const LOCAL_FUNCTIONS_PATH =
   "http://127.0.0.1:5001/cover-letter-generator-8a059/us-central1";
 

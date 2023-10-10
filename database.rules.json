@@ -7,9 +7,10 @@
       }
     },
     "coverLetters": {
+      ".indexOn": ["userUid"],
+      ".read": "query.orderByChild === 'userUid' && query.equalTo === auth.uid",
       "$coverLetterId": {
-        ".read": "data.child('userUid').val() === auth.uid",
-        ".write": "newData.child('userUid').val() === auth.uid"
+        ".write": "auth != null && newData.child('userUid').val() === auth.uid"
       }
     }
   }

@@ -110,6 +110,9 @@ export const SettingsScreen = () => {
           onChange={(e) => setOpenaiApiKey(e.target.value)}
           className="input input-bordered w-full max-w-xs"
         />
+        {user.encryptedOpenAiKeyError && (
+          <p className={`py-2 text-red-500`}>Failed to validate OpenAI key.</p>
+        )}
         {!!savedOpenaiKeyRes.msg && (
           <p
             className={`py-2 ${
@@ -145,9 +148,17 @@ export const SettingsScreen = () => {
         </label>
         <input
           type="file"
+          accept=".docx,.pdf"
+          disabled={!user.encryptedOpenAiKey || !!user.encryptedOpenAiKeyError}
           onChange={uploadResume}
           className="file-input file-input-bordered file-input-secondary w-full max-w-xs"
         />
+
+        {user.resumeError && (
+          <p className={`py-2 text-red-500`}>
+            Resume failed to analyze resume, please try to re-upload
+          </p>
+        )}
 
         {!!uploadedResumeRes.msg && (
           <p

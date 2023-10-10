@@ -19,12 +19,14 @@ type User = {
   email: string;
   uid: string;
   resumeLoading?: boolean;
+  resumeFileName?: string;
+  resumeError?: boolean;
   currentCoverLetter?: string;
   currentJobDescription?: string;
   coverLetterLoading?: boolean;
   coverLetterError?: boolean;
   encryptedOpenAiKey?: string;
-  resumeFileName?: string;
+  encryptedOpenAiKeyError?: boolean;
 };
 
 const emptyUser: User = {
@@ -59,6 +61,8 @@ const useViewProvider = () => {
         } catch (e) {
           console.error("Could not log in. ", e);
           chrome.identity.clearAllCachedAuthTokens();
+        } finally {
+          setIsLoading(false);
         }
       }
     });
@@ -78,7 +82,9 @@ const useViewProvider = () => {
           userRef,
           (snapshot) => {
             const user = snapshot.val();
-            setUser(user);
+            if (user) {
+              setUser(user);
+            }
           },
           { onlyOnce: false }
         );

@@ -5,6 +5,8 @@ import { ObjectMetadata } from "firebase-functions/v1/storage";
 import OpenAI from "openai";
 import * as pdf from "pdf-parse";
 
+import mammoth = require("mammoth");
+
 const getEncryptionKey = () => {
   const encryptionKey = process.env.ENCRYPTION_KEY;
 
@@ -27,7 +29,15 @@ export const parseFileText = async (
     .file(storageObject.name);
 
   const fileBuffer = await fileRef.download();
-  const { text: fileText } = await pdf(fileBuffer[0]);
+
+  let fileText: string;
+
+  if (storageObject.name.includes(".pdf")) {
+    fileText = (await pdf(fileBuffer[0])).text;
+  } else {
+    const res = await mammoth.extractRawText({ buffer: fileBuffer[0] });
+    fileText = res.value;
+  }
 
   return fileText;
 };

@@ -50,16 +50,16 @@ export const AnalyzeScreen = () => {
   };
 
   const saveCoverLetter = async () => {
-    const newCoverLetterKey = push(ref(db, "coverLetters")).key;
     try {
       const updates = {
         [`users/${user.uid}/currentCoverLetter`]: "",
         [`users/${user.uid}/currentJobDescription`]: "",
-        [`coverLetters/${newCoverLetterKey}`]: {
-          userUid: user.uid,
-          content: coverLetterRef.current?.value ?? user.currentCoverLetter,
-          timestamp: Date.now()
-        }
+        [`coverLetters/${user.uid}`]: [
+          {
+            content: coverLetterRef.current?.value ?? user.currentCoverLetter,
+            timestamp: Date.now()
+          }
+        ]
       };
 
       await update(ref(db), updates);
@@ -67,6 +67,46 @@ export const AnalyzeScreen = () => {
       console.error(e);
     }
   };
+
+  const isReadyToStartAnalyzing = () => {
+    return (
+      user.encryptedOpenAiKey &&
+      !user.encryptedOpenAiKeyError &&
+      user.resumeFileName
+    );
+  };
+
+  if (!isReadyToStartAnalyzing()) {
+    return (
+      <div className="mt-[180px] text-base">
+        <p>
+          In order to start creating cover letters you must complete two steps
+          first...
+        </p>
+        <ol className="list-decimal list-inside my-2">
+          <li>
+            Create an account and API key on the{" "}
+            <a
+              className="underline cursor-pointer"
+              onClick={() =>
+                window.open(
+                  "https://platform.openai.com/account/api-keys",
+                  "_blank"
+                )
+              }>
+              OpenAI
+            </a>{" "}
+            website then insert the API key on the settings screen.
+          </li>
+          <li>
+            Upload your resume and wait for the analysis to complete on the
+            settings screen.
+          </li>
+        </ol>
+        <p>Then you're done and ready to start creating cover letters!</p>
+      </div>
+    );
+  }
 
   return (
     <>

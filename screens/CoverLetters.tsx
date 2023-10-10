@@ -41,31 +41,44 @@ export const CoverLettersScreen = () => {
         equalTo(user.uid)
       );
 
-      onValue(coverLettersRef, (snapshot) => {
-        const coverLetters = snapshot.val();
-        if (coverLetters) {
-          const paginatedCoverLetters = Object.entries(coverLetters)
-            .map(([key, coverLetter]) => ({
-              ...(coverLetter as CoverLetter),
-              key
-            }))
-            .reduce<Array<CoverLetter[]>>(
-              (acc, coverLetter) => {
-                const page = acc[acc.length - 1];
+      console.log("In the cover letters thing");
+      console.log(db);
 
-                if (page.length === 5) {
-                  acc.push([coverLetter as CoverLetter]);
-                } else {
-                  page.push(coverLetter as CoverLetter);
-                }
+      onValue(
+        coverLettersRef,
+        (snapshot) => {
+          const coverLetters = snapshot.val();
 
-                return acc;
-              },
-              [[]]
-            );
-          setPaginatedCoverLetters(paginatedCoverLetters);
+          console.log("In the cover letters thing");
+          console.log(coverLetters);
+
+          if (coverLetters) {
+            const paginatedCoverLetters = Object.entries(coverLetters)
+              .map(([key, coverLetter]) => ({
+                ...(coverLetter as CoverLetter),
+                key
+              }))
+              .reduce<Array<CoverLetter[]>>(
+                (acc, coverLetter) => {
+                  const page = acc[acc.length - 1];
+
+                  if (page.length === 5) {
+                    acc.push([coverLetter as CoverLetter]);
+                  } else {
+                    page.push(coverLetter as CoverLetter);
+                  }
+
+                  return acc;
+                },
+                [[]]
+              );
+            setPaginatedCoverLetters(paginatedCoverLetters);
+          }
+        },
+        (error) => {
+          console.error("Error fetching cover letters:", error);
         }
-      });
+      );
     } catch (e) {
       console.error(e);
     }

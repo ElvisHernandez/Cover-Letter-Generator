@@ -17,7 +17,7 @@ const getAuthEmail = () => {
 };
 
 export const SigninScreen = () => {
-  const { onLogin } = useView();
+  const { onLogin, isLoading } = useView();
 
   const onSignup = async () => {
     try {
@@ -50,10 +50,15 @@ export const SigninScreen = () => {
 
   return (
     <div className="flex justify-center items-center h-full">
-      <button className="btn btn-accent w-[260px]" onClick={() => onLogin()}>
-        <img className="h-full" src={googleSigninBackground} />
-        Sign in with Google
-      </button>
+      {!isLoading && (
+        <button className="btn btn-accent w-[260px]" onClick={() => onLogin()}>
+          <img className="h-full" src={googleSigninBackground} />
+          Sign in with Google
+        </button>
+      )}
+      {isLoading && (
+        <span className="loading loading-spinner loading-md"></span>
+      )}
     </div>
   );
 };
