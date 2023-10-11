@@ -51,15 +51,15 @@ export const AnalyzeScreen = () => {
 
   const saveCoverLetter = async () => {
     try {
+      const newCoverLetterKey = push(ref(db, "coverLetters")).key;
       const updates = {
         [`users/${user.uid}/currentCoverLetter`]: "",
         [`users/${user.uid}/currentJobDescription`]: "",
-        [`coverLetters/${user.uid}`]: [
-          {
-            content: coverLetterRef.current?.value ?? user.currentCoverLetter,
-            timestamp: Date.now()
-          }
-        ]
+        [`coverLetters/${newCoverLetterKey}`]: {
+          userUid: user.uid,
+          content: coverLetterRef.current?.value ?? user.currentCoverLetter,
+          timestamp: Date.now()
+        }
       };
 
       await update(ref(db), updates);

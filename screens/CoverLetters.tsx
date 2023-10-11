@@ -26,7 +26,7 @@ type CoverLetter = {
 };
 
 export const CoverLettersScreen = () => {
-  const { user } = useView();
+  const { user, setPage } = useView();
   const [paginatedCoverLetters, setPaginatedCoverLetters] = useState<
     Array<CoverLetter[]>
   >([]);
@@ -41,16 +41,10 @@ export const CoverLettersScreen = () => {
         equalTo(user.uid)
       );
 
-      console.log("In the cover letters thing");
-      console.log(db);
-
       onValue(
         coverLettersRef,
         (snapshot) => {
           const coverLetters = snapshot.val();
-
-          console.log("In the cover letters thing");
-          console.log(coverLetters);
 
           if (coverLetters) {
             const paginatedCoverLetters = Object.entries(coverLetters)
@@ -73,6 +67,8 @@ export const CoverLettersScreen = () => {
                 [[]]
               );
             setPaginatedCoverLetters(paginatedCoverLetters);
+          } else {
+            setPaginatedCoverLetters([]);
           }
         },
         (error) => {
@@ -174,7 +170,7 @@ export const CoverLettersScreen = () => {
   }
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full">
       {paginatedCoverLetters[currentPage].map((coverLetter) => (
         <div className="collapse collapse-arrow bg-base-200 w-full">
           <input type="radio" name="my-accordion-2" />

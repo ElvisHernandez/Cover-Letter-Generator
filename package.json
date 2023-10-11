@@ -1,12 +1,9 @@
 {
-  "name": "with-firebase",
-  "displayName": "Firebase Plasmo example",
+  "name": "cover-letter-generator",
+  "displayName": "Cover Letter Generator",
   "version": "0.0.1",
-  "description": "Showcasing how easy it is to have auth with Plasmo.",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
-  "contributors": [
-    "coldsauce"
-  ],
+  "description": "Generate your cover letters with AI!",
+  "author": "Elvis Hernandez",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -36,9 +33,6 @@
   },
   "manifest": {
     "key": "$CRX_PUBLIC_KEY",
-    "host_permissions": [
-      "https://*/*"
-    ],
     "permissions": [
       "identity"
     ],

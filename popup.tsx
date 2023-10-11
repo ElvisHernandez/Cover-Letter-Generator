@@ -24,28 +24,36 @@ function IndexPopupContent() {
   if (!user.uid) return <SigninScreen />;
 
   return (
-    <div
-      className={`flex items-center flex-col ${page === 0 ? "pb-[86px]" : ""}`}>
-      <div>
-        {isLoading ? "Loading..." : ""}
-        {!!user ? <div className="mb-[24px]">Welcome {user.email}!</div> : ""}
-      </div>{" "}
-      {page === 0 && <AnalyzeScreen />}
-      {page === 1 && <CoverLettersScreen />}
-      {page === 2 && <SettingsScreen />}
-      <footer className="flex justify-evenly fixed bottom-[12px] left-0 w-full">
+    <div className={`${page === 0 || page === 1 ? "pb-[86px]" : ""}`}>
+      <div className="w-full flex items-center flex-col">
+        <div>
+          {isLoading ? "Loading..." : ""}
+          {!!user ? <div className="mb-[24px]">Welcome {user.email}!</div> : ""}
+        </div>{" "}
+        {page === 0 && <AnalyzeScreen />}
+        {page === 1 && <CoverLettersScreen />}
+        {page === 2 && <SettingsScreen />}
+      </div>
+
+      <footer className="flex justify-evenly bg-base-100 fixed bottom-[12px] left-0 w-full pt-[12px]">
         <button
-          className="btn btn-primary normal-case w-[120px]"
+          className={`btn btn-neutral normal-case w-[120px] ${
+            page === 0 ? "btn-active btn-outline" : ""
+          }`}
           onClick={() => setPage(0)}>
           Analyze
         </button>
         <button
-          className="btn btn-primary normal-case w-[120px]"
+          className={`btn btn-neutral normal-case w-[120px] ${
+            page === 1 ? "btn-active btn-outline" : ""
+          }`}
           onClick={() => setPage(1)}>
           Cover letters
         </button>
         <button
-          className="btn btn-primary normal-case w-[120px]"
+          className={`btn btn-neutral normal-case w-[120px] ${
+            page === 2 ? "btn-active btn-outline" : ""
+          }`}
           onClick={() => setPage(2)}>
           Settings
         </button>

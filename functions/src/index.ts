@@ -1,5 +1,3 @@
-import * as fs from "fs";
-import * as path from "path";
 import { NextFunction as Next, Request as Req, Response as Res } from "express";
 import { App, cert, initializeApp, ServiceAccount } from "firebase-admin/app";
 import { DecodedIdToken, getAuth } from "firebase-admin/auth";
@@ -47,6 +45,10 @@ const validateFirebaseIdToken = async (
   res: Res,
   next: Next
 ) => {
+  logger.info("-----------------------------------------------------");
+  logger.info("In the validateFirebaseIdToken middleware");
+  logger.info(req.headers);
+  logger.info("-----------------------------------------------------");
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer ")
@@ -82,60 +84,63 @@ type Response = {
   data?: object;
 };
 
-export const saveOpenAiApiKey = onRequest((req, res) => {
-  validateFirebaseIdToken(req, res, async () => {
-    const { openaiApiKey, userUid } = req.body;
+export const saveOpenAiApiKey = onRequest(
+  { timeoutSeconds: 540, cors: true },
+  (req, res) => {
+    validateFirebaseIdToken(req, res, async () => {
+      const { openaiApiKey, userUid } = req.body;
 
-    const response: Response = {
-      statusCode: 200,
-      errors: []
-    };
+      const response: Response = {
+        statusCode: 200,
+        errors: []
+      };
 
-    if (!openaiApiKey || typeof openaiApiKey !== "string") {
-      const errMsg = "Invalid <openAiApiKey> passed";
-      logger.error(errMsg);
-      response.errors.push(errMsg);
-      response.statusCode = 500;
-    }
-
-    if (!userUid || typeof userUid !== "string") {
-      const errMsg = "Invalid <userUid> passed";
-      logger.error(errMsg);
-      response.errors.push(errMsg);
-      response.statusCode = 500;
-    }
-
-    if (response.statusCode === 200) {
-      try {
-        const openai = new OpenAI({
-          apiKey: openaiApiKey
-        });
-
-        await openai.chat.completions.create({
-          messages: [{ role: "user", content: "Say this is a test" }],
-          model: "gpt-3.5-turbo"
-        });
-
-        const encryptedKey = encrypt(openaiApiKey);
-
-        db.ref(`/users/${userUid}`).update({
-          encryptedOpenAiKey: encryptedKey,
-          encryptedOpenAiKeyError: false
-        });
-      } catch (e) {
-        db.ref(`/users/${userUid}`).update({
-          encryptedOpenAiKeyError: true
-        });
-        logger.error(e);
+      if (!openaiApiKey || typeof openaiApiKey !== "string") {
+        const errMsg = "Invalid <openAiApiKey> passed";
+        logger.error(errMsg);
+        response.errors.push(errMsg);
         response.statusCode = 500;
-        response.errors.push((e as Error).message);
-      } finally {
       }
-    }
 
-    res.status(response.statusCode).send(response);
-  });
-});
+      if (!userUid || typeof userUid !== "string") {
+        const errMsg = "Invalid <userUid> passed";
+        logger.error(errMsg);
+        response.errors.push(errMsg);
+        response.statusCode = 500;
+      }
+
+      if (response.statusCode === 200) {
+        try {
+          const openai = new OpenAI({
+            apiKey: openaiApiKey
+          });
+
+          await openai.chat.completions.create({
+            messages: [{ role: "user", content: "Say this is a test" }],
+            model: "gpt-3.5-turbo"
+          });
+
+          const encryptedKey = encrypt(openaiApiKey);
+
+          db.ref(`/users/${userUid}`).update({
+            encryptedOpenAiKey: encryptedKey,
+            encryptedOpenAiKeyError: false
+          });
+        } catch (e) {
+          db.ref(`/users/${userUid}`).update({
+            encryptedOpenAiKeyError: true
+          });
+          logger.error(e);
+          response.statusCode = 500;
+          response.errors.push((e as Error).message);
+        } finally {
+        }
+      }
+
+      res.status(response.statusCode).send(response);
+    });
+  }
+);
 
 export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
   if (!object.name) return;
@@ -168,7 +173,8 @@ export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
 
 export const createCoverLetter = onRequest(
   {
-    timeoutSeconds: 540
+    timeoutSeconds: 540,
+    cors: true
   },
   (req, res) => {
     validateFirebaseIdToken(req, res, async () => {

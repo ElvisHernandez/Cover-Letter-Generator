@@ -28,6 +28,9 @@ const post = async <T>({
   try {
     const idToken = await auth.currentUser?.getIdToken();
 
+    console.log("In the post function");
+    console.log("The id token: ", idToken);
+
     const res = await fetch(`${FUNCTIONS_PATH}/${firebaseFunctionName}`, {
       method: "post",
       headers: {
