@@ -1,9 +1,13 @@
 import * as crypto from "crypto";
+import * as Sentry from "@sentry/node";
+import { NextFunction, Request, Response } from "express";
 import { App } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import OpenAI from "openai";
 import * as pdf from "pdf-parse";
+
+import { ExtendedReq } from ".";
 
 import mammoth = require("mammoth");
 
@@ -118,4 +122,49 @@ export const decrypt = (text: string) => {
   decrypted = Buffer.concat([decrypted, decipher.final()]);
 
   return decrypted.toString();
+};
+
+export const httpsOnRequestWrapper = (
+  name: string,
+  handler: (
+    req: Request,
+    res: Response,
+    next?: NextFunction
+  ) => any | Promise<any>
+) => {
+  return async (req: ExtendedReq, res: Response, next?: NextFunction) => {
+    // 1. Start the Sentry transaction
+    const transaction = Sentry.startTransaction({
+      name,
+      op: "functions.https.onRequest"
+    });
+
+    // 2. Set the transaction context
+    // In this example, we’re sending the uid from Firebase auth
+    // You can send any relevant data here that might help with
+    // debugging
+    Sentry.setContext("Function context", {
+      ...(req.body || {}),
+      user: req.user,
+      function: name,
+      op: "functions.https.onRequest"
+    });
+
+    try {
+      // 3. Try calling the function handler itself
+      return await handler(req, res, next);
+    } catch (e) {
+      // 4. Send any errors to Sentry
+      await Sentry.captureException(e);
+      await Sentry.flush(1000);
+
+      // Don’t forget to throw them too!
+
+      throw e;
+    } finally {
+      // 5. Finish the Sentry transaction
+      Sentry.configureScope((scope) => scope.clear());
+      transaction.finish();
+    }
+  };
 };

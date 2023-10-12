@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/node";
+import { ProfilingIntegration } from "@sentry/profiling-node";
 import { NextFunction as Next, Request as Req, Response as Res } from "express";
 import { App, cert, initializeApp, ServiceAccount } from "firebase-admin/app";
 import { DecodedIdToken, getAuth } from "firebase-admin/auth";
@@ -12,13 +14,26 @@ import {
   analyzeResumeContent,
   decrypt,
   encrypt,
+  httpsOnRequestWrapper,
   parseFileText,
   parseResumeAnalysis
 } from "./utils";
 
 let app: App;
-
 if (process.env.NODE_ENV !== "production") {
+  Sentry.init({
+    dsn: "https://0b23f5e75091bcf99a0ff4eeb3ce596c@o4505937463869440.ingest.sentry.io/4506039341219840",
+    integrations: [
+      // enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true }),
+      // enable Express.js middleware tracing
+      new ProfilingIntegration()
+    ],
+    // Performance Monitoring
+    tracesSampleRate: 1.0, // Capture 100% of the transactions, reduce in production!
+    // Set sampling rate for profiling - this is relative to tracesSampleRate
+    profilesSampleRate: 1.0 // Capture 100% of the transactions, reduce in production!
+  });
   const serviceAccount = require("../private/firebase_service_account.json");
   process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
   app = initializeApp({
@@ -36,7 +51,7 @@ if (process.env.NODE_ENV !== "production") {
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-interface ExtendedReq extends Req {
+export interface ExtendedReq extends Req {
   user?: DecodedIdToken;
 }
 
@@ -66,16 +81,22 @@ const validateFirebaseIdToken = async (
     req.user = decodedIdToken;
     next();
   } catch (error) {
+    Sentry.captureException(error);
     console.error("Error while verifying Firebase ID token:", error);
     res.status(403).send("Unauthorized");
   }
 };
 
-export const onAuthUserCreate = user().onCreate((user, ctx) => {
-  return db.ref(`/users/${user.uid}`).set({
-    email: user.email,
-    uid: user.uid
-  });
+export const onAuthUserCreate = user().onCreate(async (user, ctx) => {
+  try {
+    await db.ref(`/users/${user.uid}`).set({
+      email: user.email,
+      uid: user.uid
+    });
+  } catch (e) {
+    logger.error(e);
+    Sentry.captureException(e);
+  }
 });
 
 type Response = {
@@ -86,7 +107,7 @@ type Response = {
 
 export const saveOpenAiApiKey = onRequest(
   { timeoutSeconds: 540, cors: true },
-  (req, res) => {
+  httpsOnRequestWrapper("saveOpenAiApiKey", (req, res) => {
     validateFirebaseIdToken(req, res, async () => {
       const { openaiApiKey, userUid } = req.body;
 
@@ -130,16 +151,16 @@ export const saveOpenAiApiKey = onRequest(
           db.ref(`/users/${userUid}`).update({
             encryptedOpenAiKeyError: true
           });
+          Sentry.captureException(e);
           logger.error(e);
           response.statusCode = 500;
           response.errors.push((e as Error).message);
-        } finally {
         }
       }
 
       res.status(response.statusCode).send(response);
     });
-  }
+  })
 );
 
 export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
@@ -161,6 +182,7 @@ export const analyzeResumeOnUpload = object().onFinalize(async (object) => {
 
     await userRef.update({ ...parsedAnalysis, resumeFileName });
   } catch (e) {
+    Sentry.captureException(e);
     resumeError = true;
     logger.error(e);
   } finally {
@@ -176,7 +198,7 @@ export const createCoverLetter = onRequest(
     timeoutSeconds: 540,
     cors: true
   },
-  (req, res) => {
+  httpsOnRequestWrapper("createCoverLetter", (req, res) => {
     validateFirebaseIdToken(req, res, async () => {
       const {
         jobDescription,
@@ -218,13 +240,6 @@ export const createCoverLetter = onRequest(
 
         const chosenStyle = styleOpts[style];
         const chosenEmphasis = emphasisOpts[emphasis];
-
-        console.log("--------------------------------------------------------");
-        console.log(`style: ${style} | chosen style: ${chosenStyle}`);
-        console.log(
-          `emphasis: ${emphasis} | chosen emphasis: ${chosenEmphasis}`
-        );
-        console.log("--------------------------------------------------------");
 
         const chatCompletion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",
@@ -268,6 +283,7 @@ export const createCoverLetter = onRequest(
           currentCoverLetter: "",
           coverLetterError: true
         });
+        Sentry.captureException(e);
         logger.error(e);
         response.errors.push((e as Error).message);
         response.statusCode = 500;
@@ -275,5 +291,5 @@ export const createCoverLetter = onRequest(
 
       res.status(response.statusCode).send(response);
     });
-  }
+  })
 );
