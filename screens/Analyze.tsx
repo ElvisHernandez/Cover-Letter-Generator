@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { push, ref, update } from "firebase/database";
 import { useMemo, useRef, useState } from "react";
 
@@ -31,6 +32,7 @@ export const AnalyzeScreen = () => {
         }
       });
     } catch (e) {
+      Sentry.captureException(e);
       console.error(e);
     } finally {
       //   setIsLoading(false);
@@ -45,6 +47,7 @@ export const AnalyzeScreen = () => {
         currentCoverLetter: ""
       });
     } catch (e) {
+      Sentry.captureException(e);
       console.error(e);
     }
   };
@@ -64,6 +67,7 @@ export const AnalyzeScreen = () => {
 
       await update(ref(db), updates);
     } catch (e) {
+      Sentry.captureException(e);
       console.error(e);
     }
   };

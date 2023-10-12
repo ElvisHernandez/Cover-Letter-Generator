@@ -35,7 +35,7 @@ function IndexPopupContent() {
         {page === 2 && <SettingsScreen />}
       </div>
 
-      <footer className="flex justify-evenly bg-base-100 fixed bottom-[12px] left-0 w-full pt-[12px]">
+      <footer className="flex justify-evenly bg-base-100 fixed bottom-[0] left-0 w-full py-[12px]">
         <button
           className={`btn btn-neutral normal-case w-[120px] ${
             page === 0 ? "btn-active btn-outline" : ""

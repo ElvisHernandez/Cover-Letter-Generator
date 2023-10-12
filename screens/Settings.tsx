@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { ref as dbRef, update } from "firebase/database";
 import { deleteObject, listAll, ref, uploadBytes } from "firebase/storage";
 import React, { useState } from "react";
@@ -48,6 +49,7 @@ export const SettingsScreen = () => {
         10000
       );
     } catch (e) {
+      Sentry.captureException(e);
       console.error(e);
     } finally {
       setOpenAiKeyLoading(false);
@@ -75,6 +77,8 @@ export const SettingsScreen = () => {
         success: true
       });
     } catch (e) {
+      Sentry.captureException(e);
+
       console.error(e);
       setUploadedResumeRes({
         msg: "Resume failed to upload, please try again",

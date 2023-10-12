@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import deleteIcon from "data-base64:~assets/delete-icon.svg";
 import docxIcon from "data-base64:~assets/docx-icon.svg";
 import pdfIcon from "data-base64:~assets/pdf-icon.svg";
@@ -73,33 +74,40 @@ export const CoverLettersScreen = () => {
         },
         (error) => {
           console.error("Error fetching cover letters:", error);
+          Sentry.captureException(error);
         }
       );
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   };
 
   const exportPdf = async (coverLetterContent: string) => {
-    const pdf = new jsPDF({});
-    pdf.setFontSize(12);
-    const pageWidth = pdf.internal.pageSize.getWidth() - 20;
-    const splittedText = pdf.splitTextToSize(coverLetterContent, pageWidth);
+    try {
+      const pdf = new jsPDF({});
+      pdf.setFontSize(12);
+      const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+      const splittedText = pdf.splitTextToSize(coverLetterContent, pageWidth);
 
-    let yPos = 20; // Initial vertical position
-    const lineHeight = 7; // Height for each line
-    const pageHeight = pdf.internal.pageSize.getHeight() - 20; // Adjust bottom margin as required
+      let yPos = 20; // Initial vertical position
+      const lineHeight = 7; // Height for each line
+      const pageHeight = pdf.internal.pageSize.getHeight() - 20; // Adjust bottom margin as required
 
-    splittedText.forEach((line: string) => {
-      if (yPos + lineHeight > pageHeight) {
-        pdf.addPage();
-        yPos = 20; // Reset y position for the new page
-      }
+      splittedText.forEach((line: string) => {
+        if (yPos + lineHeight > pageHeight) {
+          pdf.addPage();
+          yPos = 20; // Reset y position for the new page
+        }
 
-      pdf.text(line, 10, yPos); // (string, x-coordinate, y-coordinate)
-      yPos += lineHeight; // Move the y position down for next line
-    });
-    pdf.save("cover-letter.pdf");
+        pdf.text(line, 10, yPos); // (string, x-coordinate, y-coordinate)
+        yPos += lineHeight; // Move the y position down for next line
+      });
+      pdf.save("cover-letter.pdf");
+    } catch (e) {
+      console.error(e);
+      Sentry.captureException(e);
+    }
   };
 
   const exportDocx = async (coverLetterContent: string) => {
@@ -125,6 +133,7 @@ export const CoverLettersScreen = () => {
       const url = window.URL.createObjectURL(docBlob);
       window.location.href = url;
     } catch (e) {
+      Sentry.captureException(e);
       console.error(e);
     }
   };
@@ -150,6 +159,7 @@ export const CoverLettersScreen = () => {
       });
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   };
 
@@ -158,6 +168,7 @@ export const CoverLettersScreen = () => {
       await remove(ref(db, `coverLetters/${coverLetterKey}`));
     } catch (e) {
       console.error(e);
+      Sentry.captureException(e);
     }
   };
 

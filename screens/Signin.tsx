@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import googleSigninBackground from "data-base64:~assets/btn_google_light_normal_ios.svg";
 import {
   createUserWithEmailAndPassword,
@@ -23,6 +24,7 @@ export const SigninScreen = () => {
     try {
       await createUserWithEmailAndPassword(auth, getAuthEmail(), "password");
     } catch (e) {
+      Sentry.captureException(e);
       console.error("Error on signup: ", e);
     }
   };
@@ -31,6 +33,8 @@ export const SigninScreen = () => {
     try {
       await signInWithEmailAndPassword(auth, getAuthEmail(), "password");
     } catch (e) {
+      Sentry.captureException(e);
+
       console.error("Error signing in: ", e);
     }
   };

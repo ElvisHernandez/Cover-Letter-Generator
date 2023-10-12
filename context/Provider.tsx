@@ -1,17 +1,16 @@
+import * as Sentry from "@sentry/react";
 import {
   browserLocalPersistence,
-  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
-  signInWithCredential,
-  signInWithPopup
+  signInWithCredential
 } from "firebase/auth";
 import { onValue, ref } from "firebase/database";
 import { createProvider } from "puro";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
-import { app, auth, db } from "~context";
+import { auth, db } from "~context";
 
 setPersistence(auth, browserLocalPersistence);
 
@@ -59,6 +58,7 @@ const useViewProvider = () => {
         try {
           await signInWithCredential(auth, credential);
         } catch (e) {
+          Sentry.captureException(e);
           console.error("Could not log in. ", e);
           chrome.identity.clearAllCachedAuthTokens();
         } finally {

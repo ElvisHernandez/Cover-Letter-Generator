@@ -6,10 +6,12 @@
   "author": "Elvis Hernandez",
   "scripts": {
     "dev": "plasmo dev",
-    "build": "plasmo build",
-    "package": "plasmo package"
+    "build": "plasmo build && yarn sentry:sourcemaps",
+    "package": "plasmo package",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org authentic-development --project cover-letter-generator-client ./build/chrome-mv3-prod && sentry-cli sourcemaps upload --org authentic-development --project cover-letter-generator-client ./build/chrome-mv3-prod"
   },
   "dependencies": {
+    "@sentry/react": "^7.73.0",
     "docx": "^8.2.3",
     "firebase": "10.3.1",
     "jspdf": "^2.5.1",

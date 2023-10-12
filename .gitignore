@@ -35,3 +35,5 @@ dist/
 # typescript
 .tsbuildinfo
 private/
+# Sentry Config File
+.sentryclirc
