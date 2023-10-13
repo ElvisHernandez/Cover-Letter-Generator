@@ -3,7 +3,12 @@ WARNING: Illegal reflective access by io.netty.util.internal.ReflectionUtil (fil
 WARNING: Please consider reporting this to the maintainers of io.netty.util.internal.ReflectionUtil
 WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
 WARNING: All illegal access operations will be denied in a future release
-17:32:51.050 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
-17:32:51.202 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
-17:32:51.880 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - cover-letter-generator-8a059-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 205ms, init: 0ms
-17:33:03.828 [NamespaceSystem-blocking-namespace-operation-dispatcher-8] INFO com.firebase.core.namespace.StateManager - Namespace cover-letter-generator-8a059-default-rtdb status Active to Active
+21:40:12.226 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+21:40:12.400 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+21:40:12.841 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - cover-letter-generator-8a059-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 137ms, init: 0ms
+21:40:22.284 [NamespaceSystem-blocking-namespace-operation-dispatcher-7] INFO com.firebase.core.namespace.StateManager - Namespace cover-letter-generator-8a059-default-rtdb status Active to Active
+21:41:34.004 [FirebaseWorkerPool-1-1] WARN com.firebase.core.persistence.backend.dummy.EmulatorMetadataPersistence - Multiple projectIds are not recommended in single project mode. Requested 
+namespace cover-letter-generator-8a059, but the emulator is configured for cover-letter-generator-8a059-default-rtdb. To 
+opt-out of single project mode add/set the singleProjectMode: false property in 
+the firebase.json emulators config. 
+21:41:34.012 [NamespaceSystem-akka.actor.default-dispatcher-12] INFO com.firebase.core.namespace.NamespaceActor - cover-letter-generator-8a059 successfully activated FBKV (SurveyIdle(0)) wait: 3ms, init: 0ms

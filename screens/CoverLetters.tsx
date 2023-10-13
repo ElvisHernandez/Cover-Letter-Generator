@@ -183,7 +183,9 @@ export const CoverLettersScreen = () => {
   return (
     <div className="w-full">
       {paginatedCoverLetters[currentPage].map((coverLetter) => (
-        <div className="collapse collapse-arrow bg-base-200 w-full">
+        <div
+          key={coverLetter.key}
+          className="collapse collapse-arrow bg-base-200 w-full">
           <input type="radio" name="my-accordion-2" />
           <div className="collapse-title text-xl font-medium flex justify-between">
             {coverLetter.content.slice(0, 20)}...
