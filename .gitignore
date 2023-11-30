@@ -37,3 +37,5 @@ dist/
 private/
 # Sentry Config File
 .sentryclirc
+*.log
+firebase-debug.log
