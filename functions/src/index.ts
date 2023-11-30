@@ -21,6 +21,14 @@ import {
 
 let app: App;
 if (process.env.NODE_ENV !== "production") {
+  const serviceAccount = require("../private/firebase_service_account.json");
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+  app = initializeApp({
+    credential: cert(serviceAccount as ServiceAccount),
+    databaseURL:
+      "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
+  });
+} else {
   Sentry.init({
     dsn: "https://0b23f5e75091bcf99a0ff4eeb3ce596c@o4505937463869440.ingest.sentry.io/4506039341219840",
     integrations: [
@@ -34,14 +42,6 @@ if (process.env.NODE_ENV !== "production") {
     // Set sampling rate for profiling - this is relative to tracesSampleRate
     profilesSampleRate: 1.0 // Capture 100% of the transactions, reduce in production!
   });
-  const serviceAccount = require("../private/firebase_service_account.json");
-  process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
-  app = initializeApp({
-    credential: cert(serviceAccount as ServiceAccount),
-    databaseURL:
-      "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
-  });
-} else {
   app = initializeApp({
     databaseURL:
       "https://cover-letter-generator-8a059-default-rtdb.firebaseio.com"
@@ -60,10 +60,6 @@ const validateFirebaseIdToken = async (
   res: Res,
   next: Next
 ) => {
-  logger.info("-----------------------------------------------------");
-  logger.info("In the validateFirebaseIdToken middleware");
-  logger.info(req.headers);
-  logger.info("-----------------------------------------------------");
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer ")

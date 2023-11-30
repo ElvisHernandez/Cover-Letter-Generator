@@ -1,7 +1,7 @@
 {
   "name": "cover-letter-generator",
   "displayName": "Cover Letter Generator",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Generate your cover letters with AI!",
   "author": "Elvis Hernandez",
   "scripts": {
