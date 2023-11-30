@@ -1,33 +1,21 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+This Chrome Extension is a simple to use Cover Letter Generator meant to help you on your job search!
 
-## Getting Started
+![](/assets/cover-letter-generator.png)
 
-First, run the development server:
+The app consists of roughly two parts
 
-```bash
-pnpm dev
-# or
-npm run dev
-```
+- Front-End
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+  Built with Plasmo which is a react based framework used for building Chrome Extensions.
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+- Back-End
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+  Built with Firebase services like Firebase Functions, Auth, and Realtime Database.
 
-## Making production build
+The secret sauce here is the Chat GPT API that allows us to summarize relevant skills/experience and generate a cover letter given a job description.
 
-Run the following:
+To use the app you'll need three things, an OpenAI API key, a google account (for auth), and a resume. After signing up and entering your API key and resume, you'll be able to start analyzing job descriptions to generate cover letters.
 
-```bash
-pnpm build
-# or
-npm run build
-```
+[Check it out on the Chrome Store!](https://chromewebstore.google.com/detail/cover-letter-generator/inldinjjkpclfafpbpofehahkacnaegd)
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
-
-## Submit to the webstores
-
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+![](https://www.youtube.com/watch?v=wTEikdwiSUk)
